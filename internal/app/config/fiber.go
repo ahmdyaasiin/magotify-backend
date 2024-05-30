@@ -2,6 +2,8 @@ package config
 
 import (
 	"errors"
+	"github.com/ahmdyaasiin/magotify-backend/internal/pkg/validation"
+	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"os"
 )
@@ -22,6 +24,14 @@ func NewErrorHandler() fiber.ErrorHandler {
 		var e *fiber.Error
 		if errors.As(err, &e) {
 			code = e.Code
+		}
+
+		var ve validator.ValidationErrors
+		errorList := validation.GetError(err, ve)
+		if err != nil {
+			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"errors": errorList,
+			})
 		}
 
 		return ctx.Status(code).JSON(fiber.Map{

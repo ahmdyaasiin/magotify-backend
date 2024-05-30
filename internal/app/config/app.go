@@ -1,6 +1,8 @@
 package config
 
 import (
+	"github.com/ahmdyaasiin/magotify-backend/internal/app/delivery/http"
+	"github.com/ahmdyaasiin/magotify-backend/internal/app/delivery/http/route"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/jmoiron/sqlx"
@@ -16,4 +18,13 @@ type AppConfig struct {
 
 func App(config *AppConfig) {
 	//
+
+	serverController := http.NewServerController()
+
+	routeConfig := &route.Config{
+		App:              config.App,
+		ServerController: serverController,
+	}
+
+	routeConfig.Setup()
 }
