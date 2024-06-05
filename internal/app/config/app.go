@@ -22,16 +22,20 @@ func App(config *AppConfig) {
 	//
 
 	userRepository := repository.NewUserRepository(config.DB)
+	menuRepository := repository.NewMenuRepository(config.DB)
 
 	userUseCase := usecase.NewUserUseCase(config.DB, config.Log, userRepository)
+	menuUseCase := usecase.NewMenuUseCase(config.DB, config.Log, menuRepository)
 
 	serverController := http.NewServerController()
 	userController := http.NewUserController(config.Log, config.Validator, userUseCase)
+	menuController := http.NewMenuController(config.Log, config.Validator, menuUseCase)
 
 	routeConfig := &route.Config{
 		App:              config.App,
 		ServerController: serverController,
 		UserController:   userController,
+		MenuController:   menuController,
 	}
 
 	routeConfig.Setup()

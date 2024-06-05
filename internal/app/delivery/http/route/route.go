@@ -10,6 +10,7 @@ type Config struct {
 	App              *fiber.App
 	ServerController *http.ServerController
 	UserController   *http.UserController
+	MenuController   *http.MenuController
 }
 
 func (c *Config) Setup() {
@@ -24,5 +25,8 @@ func (c *Config) V1() {
 	auth := v1.Group("/auth")
 	auth.Post("register", c.UserController.Register)
 	auth.Post("login", c.UserController.Login)
+	
+	menu := v1.Group("/menu")
+	menu.Get("explore", c.MenuController.Explore)
 
 }
