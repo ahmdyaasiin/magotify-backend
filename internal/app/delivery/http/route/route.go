@@ -9,6 +9,7 @@ type Config struct {
 	//
 	App              *fiber.App
 	ServerController *http.ServerController
+	UserController   *http.UserController
 }
 
 func (c *Config) Setup() {
@@ -19,5 +20,9 @@ func (c *Config) V1() {
 	// grouping
 	v1 := c.App.Group("/v1")
 	v1.Get("status", c.ServerController.Status)
+
+	auth := v1.Group("/auth")
+	auth.Post("register", c.UserController.Register)
+	auth.Post("login", c.UserController.Login)
 
 }
