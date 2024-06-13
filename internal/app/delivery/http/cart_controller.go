@@ -2,6 +2,7 @@ package http
 
 import (
 	"github.com/ahmdyaasiin/magotify-backend/internal/app/delivery/http/middleware"
+	"github.com/ahmdyaasiin/magotify-backend/internal/app/model"
 	"github.com/ahmdyaasiin/magotify-backend/internal/app/usecase"
 	"github.com/ahmdyaasiin/magotify-backend/internal/pkg/response"
 	"github.com/go-playground/validator/v10"
@@ -9,31 +10,30 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type MenuController struct {
+type CartController struct {
 	Log         *logrus.Logger
 	Validator   *validator.Validate
-	MenuUseCase usecase.InterfaceMenuUseCase
+	CartUseCase usecase.InterfaceCartUseCase
 }
 
-func NewMenuController(log *logrus.Logger, val *validator.Validate, mu usecase.InterfaceMenuUseCase) *MenuController {
-	return &MenuController{
+func NewCartController(log *logrus.Logger, val *validator.Validate, cu usecase.InterfaceCartUseCase) *CartController {
+	return &CartController{
 		Log:         log,
 		Validator:   val,
-		MenuUseCase: mu,
+		CartUseCase: cu,
 	}
 }
 
-func (c *MenuController) Explore(ctx *fiber.Ctx) error {
-
+func (c *CartController) GetCart(ctx *fiber.Ctx) error {
 	auth := middleware.GetUser(ctx)
 
-	res, err := c.MenuUseCase.Explore(auth)
+	res, err := c.CartUseCase.GetCart(auth)
 	if err != nil {
 		return err
 	}
 
 	return ctx.JSON(response.Success{
-		Message: "Success get Explore",
+		Message: "Success get Cart",
 		Data:    res,
 		Status: response.Status{
 			Code:    fiber.StatusOK,
@@ -42,16 +42,27 @@ func (c *MenuController) Explore(ctx *fiber.Ctx) error {
 	})
 }
 
-func (c *MenuController) Shop(ctx *fiber.Ctx) error {
+func (c *CartController) AddToCart(ctx *fiber.Ctx) error {
 	auth := middleware.GetUser(ctx)
 
-	res, err := c.MenuUseCase.Shop(auth)
+	request := new(model.RequestAddCart)
+
+	if err := ctx.BodyParser(request); err != nil {
+		return fiber.ErrBadRequest
+	}
+
+	if err := c.Validator.Struct(request); err != nil {
+		return err
+	}
+
+	// usecase
+	res, err := c.CartUseCase.AddCart(auth, request)
 	if err != nil {
 		return err
 	}
 
 	return ctx.JSON(response.Success{
-		Message: "Success get Shop",
+		Message: "Success get Explore",
 		Data:    res,
 		Status: response.Status{
 			Code:    fiber.StatusOK,

@@ -48,3 +48,12 @@ func CreateCustomToken(nim string) (string, error) {
 
 	return token, nil
 }
+
+func DecodeCustomToken(idToken string) (string, error) {
+	token, err := authClient.VerifyIDToken(ctx, idToken)
+	if err != nil {
+		return "", err
+	}
+
+	return token.UID, nil
+}

@@ -11,6 +11,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/bcrypt"
+	"strings"
 	"time"
 )
 
@@ -18,21 +19,24 @@ type InterfaceUserUseCase interface {
 	//
 	Create(request *model.RequestUserRegister) (*model.ResponseUser, error)
 	Login(request *model.RequestUserLogin) (*model.ResponseUser, error)
+	Verify(request *model.UUIDMiddleware) error
 }
 
 type UserUseCase struct {
 	//
-	DB             *sqlx.DB
-	Log            *logrus.Logger
-	UserRepository repository.InterfaceUserRepository
+	DB                *sqlx.DB
+	Log               *logrus.Logger
+	UserRepository    repository.InterfaceUserRepository
+	AddressRepository repository.InterfaceAddressRepository
 }
 
-func NewUserUseCase(db *sqlx.DB, log *logrus.Logger, ur repository.InterfaceUserRepository) InterfaceUserUseCase {
+func NewUserUseCase(db *sqlx.DB, log *logrus.Logger, ur repository.InterfaceUserRepository, ar repository.InterfaceAddressRepository) InterfaceUserUseCase {
 	//
 	return &UserUseCase{
-		DB:             db,
-		Log:            log,
-		UserRepository: ur,
+		DB:                db,
+		Log:               log,
+		UserRepository:    ur,
+		AddressRepository: ar,
 	}
 }
 
@@ -47,27 +51,18 @@ func (u *UserUseCase) Create(request *model.RequestUserRegister) (*model.Respons
 
 	// check duplicate email
 	err = u.UserRepository.FindBy(tx, "email", request.Email, user)
-	if err != nil {
-		fmt.Println(err)
+	if err != nil && !strings.Contains(err.Error(), "no rows in result set") {
 		return nil, err
 	}
 
 	if user.ID != "" {
-		return nil, fiber.ErrConflict
-	}
-
-	// check duplicate phone_number
-	err = u.UserRepository.FindBy(tx, "phone_number", request.Email, user)
-	if err != nil {
-		return nil, err
-	}
-
-	if user.ID != "" {
+		fmt.Println("wowo1")
 		return nil, fiber.ErrConflict
 	}
 
 	password, err := bcrypt.GenerateFromPassword([]byte(request.Password), bcrypt.DefaultCost)
 	if err != nil {
+		fmt.Println("wowo4")
 		return nil, err
 	}
 
@@ -76,15 +71,37 @@ func (u *UserUseCase) Create(request *model.RequestUserRegister) (*model.Respons
 	user.ID = uuid.NewString()
 	user.Name = request.FullName
 	user.Email = request.Email
-	user.PhoneNumber = request.PhoneNumber
 	user.Password = string(password)
-	user.PhotoProfile = "default.jpg"
+	user.UrlPhoto = "default.jpg"
 	user.CreatedAt = now
 	user.UpdatedAt = now
 
 	err = u.UserRepository.Create(tx, user)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println("create: " + err.Error())
+		return nil, err
+	}
+
+	// add primary address
+	address := &entity.Address{
+		ID:          uuid.NewString(),
+		Name:        "Main Address",
+		Address:     request.Address,
+		District:    request.District,
+		City:        request.City,
+		State:       request.State,
+		PostalCode:  request.PostalCode,
+		Latitude:    request.Latitude,
+		Longitude:   request.Longitude,
+		IsPrimary:   true,
+		PhoneNumber: request.PhoneNumber,
+		CreatedAt:   now,
+		UpdatedAt:   now,
+		UserID:      user.ID,
+	}
+
+	err = u.AddressRepository.Create(tx, address)
+	if err != nil {
 		return nil, err
 	}
 
@@ -131,4 +148,21 @@ func (u *UserUseCase) Login(request *model.RequestUserLogin) (*model.ResponseUse
 	}
 
 	return &model.ResponseUser{Token: token}, nil
+}
+
+func (u *UserUseCase) Verify(request *model.UUIDMiddleware) error {
+	tx, err := u.DB.Beginx()
+	defer tx.Rollback()
+	if err != nil {
+		return err
+	}
+
+	user := new(entity.User)
+	err = u.UserRepository.FindBy(tx, "id", request.UUID, user)
+	if err != nil {
+		return err
+	}
+
+	return nil
+
 }
