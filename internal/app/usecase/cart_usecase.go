@@ -19,23 +19,25 @@ type InterfaceCartUseCase interface {
 
 type CartUseCase struct {
 	//
-	DB                *sqlx.DB
-	Log               *logrus.Logger
-	MenuRepository    repository.InterfaceMenuRepository
-	UserRepository    repository.InterfaceUserRepository
-	CartRepository    repository.InterfaceCartRepository
-	ProductRepository repository.InterfaceProductRepository
+	DB                 *sqlx.DB
+	Log                *logrus.Logger
+	MenuRepository     repository.InterfaceMenuRepository
+	UserRepository     repository.InterfaceUserRepository
+	CartRepository     repository.InterfaceCartRepository
+	ProductRepository  repository.InterfaceProductRepository
+	CategoryRepository repository.InterfaceCategoryRepository
 }
 
-func NewCartUseCase(db *sqlx.DB, log *logrus.Logger, mr repository.InterfaceMenuRepository, ur repository.InterfaceUserRepository, cr repository.InterfaceCartRepository, pr repository.InterfaceProductRepository) InterfaceCartUseCase {
+func NewCartUseCase(db *sqlx.DB, log *logrus.Logger, mr repository.InterfaceMenuRepository, ur repository.InterfaceUserRepository, cr repository.InterfaceCartRepository, pr repository.InterfaceProductRepository, car repository.InterfaceCategoryRepository) InterfaceCartUseCase {
 	//
 	return &CartUseCase{
-		DB:                db,
-		Log:               log,
-		MenuRepository:    mr,
-		UserRepository:    ur,
-		CartRepository:    cr,
-		ProductRepository: pr,
+		DB:                 db,
+		Log:                log,
+		MenuRepository:     mr,
+		UserRepository:     ur,
+		CartRepository:     cr,
+		ProductRepository:  pr,
+		CategoryRepository: car,
 	}
 }
 
@@ -70,18 +72,38 @@ func (u *CartUseCase) GetCart(auth string) (*model.MyCart, error) {
 		return nil, err
 	}
 
-	// products discount
-	var productDiscount []model.ExploreItems
+	// get hot items
+	var h []model.HotItemsSlice
 
-	err = u.MenuRepository.ProductBestOffer(tx, &productDiscount)
+	err = u.CategoryRepository.GetALlCategoriesName(tx, &h)
 	if err != nil {
 		return nil, err
 	}
 
+	allCategory := model.HotItemsSlice{
+		Name:     "All",
+		UrlPhoto: "",
+		Products: nil,
+	}
+
+	h = append([]model.HotItemsSlice{allCategory}, h...)
+
+	for i, n := range h {
+		if n.Name == "All" {
+			err = u.MenuRepository.HotItemsGeneral(tx, &h[i].Products, user.ID)
+		} else {
+			err = u.MenuRepository.HotItemsSpecific(tx, &h[i].Products, h[i].Name, user.ID)
+		}
+
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	return &model.MyCart{
-		Product:         productCart,
-		TotalCart:       totalCart,
-		ProductDiscount: productDiscount,
+		Product:   productCart,
+		TotalCart: totalCart,
+		HotItems:  h,
 	}, nil
 }
 

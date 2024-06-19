@@ -83,14 +83,15 @@ func CheckCost(postalCode int, weightOnGram float64, dest *[]model.ServicesOngki
 			for _, costDetail := range cost.Cost {
 
 				var etd string
-				if len(costDetail.Etd) < 2 {
+				if len(costDetail.Etd) > 1 {
 					etd = costDetail.Etd + " Days"
 				} else {
 					etd = costDetail.Etd + " Day"
 				}
 
 				service := model.ServicesOngkir{
-					Name:        cost.Service,
+					Name:        result.Code,
+					Service:     cost.Service,
 					Description: cost.Description,
 					Cost:        costDetail.Value,
 					Estimation:  etd,

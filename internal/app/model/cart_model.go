@@ -1,9 +1,9 @@
 package model
 
 type MyCart struct {
-	Product         []ProductCart
-	TotalCart       int `json:"total_cart"`
-	ProductDiscount []ExploreItems
+	Product   []ProductCart   `json:"product"`
+	TotalCart int             `json:"total_cart"`
+	HotItems  []HotItemsSlice `json:"hot_items"`
 }
 
 type ProductCart struct {

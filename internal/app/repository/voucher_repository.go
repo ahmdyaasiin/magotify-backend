@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"fmt"
 	"github.com/ahmdyaasiin/magotify-backend/internal/app/entity"
 	"github.com/jmoiron/sqlx"
 )
@@ -8,6 +9,8 @@ import (
 type InterfaceVoucherRepository interface {
 	//
 	TotalVouchers(tx *sqlx.Tx, totalVoucher *int, user *entity.User) error
+	FindBy(tx *sqlx.Tx, column string, value string, entity *entity.Voucher, user *entity.User) error
+	FindExcept(tx *sqlx.Tx, voucherID string, vouchers *[]entity.Voucher, user *entity.User) error
 }
 
 type VoucherRepository struct {
@@ -22,7 +25,7 @@ func NewVoucherRepository(db *sqlx.DB) InterfaceVoucherRepository {
 }
 
 func (r VoucherRepository) TotalVouchers(tx *sqlx.Tx, totalVoucher *int, user *entity.User) error {
-	q := "SELECT COUNT(*) FROM vouchers WHERE user_id = :user_id"
+	q := "SELECT COUNT(*) FROM vouchers WHERE user_id = :user_id AND status = 1"
 	param := map[string]any{
 		"user_id": user.ID,
 	}
@@ -33,6 +36,46 @@ func (r VoucherRepository) TotalVouchers(tx *sqlx.Tx, totalVoucher *int, user *e
 	}
 
 	err = stmt.Get(totalVoucher, param)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *VoucherRepository) FindBy(tx *sqlx.Tx, column string, value string, entity *entity.Voucher, user *entity.User) error {
+	q := fmt.Sprintf("SELECT * FROM vouchers WHERE %s = :value AND user_id = :user_id AND status = 1", column)
+	param := map[string]any{
+		"value":   value,
+		"user_id": user.ID,
+	}
+
+	stmt, err := tx.PrepareNamed(q)
+	if err != nil {
+		return err
+	}
+
+	err = stmt.Get(entity, param)
+	if err != nil {
+		return err
+	}
+
+	return err
+}
+
+func (r *VoucherRepository) FindExcept(tx *sqlx.Tx, voucherID string, vouchers *[]entity.Voucher, user *entity.User) error {
+	q := "SELECT * FROM vouchers WHERE id != :voucher_id AND user_id = :user_id AND status = 1"
+	param := map[string]any{
+		"voucher_id": voucherID,
+		"user_id":    user.ID,
+	}
+
+	stmt, err := tx.PrepareNamed(q)
+	if err != nil {
+		return err
+	}
+
+	err = stmt.Select(vouchers, param)
 	if err != nil {
 		return err
 	}

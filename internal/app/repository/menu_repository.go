@@ -10,7 +10,7 @@ type InterfaceMenuRepository interface {
 	//
 	HotItemsGeneral(tx *sqlx.Tx, dest *[]model.ExploreItems, user_id string) error
 	HotItemsSpecific(tx *sqlx.Tx, dest *[]model.ExploreItems, categoryName string, user_id string) error
-	TimeToCleanUp(tx *sqlx.Tx, dest *[]model.ExploreTimeToCleanUp, user_id string) error
+	TimeToCleanUp(tx *sqlx.Tx, dest *[]model.ExploreTimeToCleanUp, userID string) error
 	ProductBestOffer(tx *sqlx.Tx, products *[]model.ExploreItems) error
 }
 
@@ -150,30 +150,27 @@ ORDER BY
 	return nil
 }
 
-func (r *MenuRepository) TimeToCleanUp(tx *sqlx.Tx, dest *[]model.ExploreTimeToCleanUp, user_id string) error {
+func (r *MenuRepository) TimeToCleanUp(tx *sqlx.Tx, dest *[]model.ExploreTimeToCleanUp, userID string) error {
 	q := `
 SELECT
-    v.id,
-    v.name,
-    v.url_photo,
-    v.description,
-    v.status,
-    w.name as warehouse_name,
-    ST_Distance_Sphere(
-        POINT(w.longitude, w.latitude),
-        POINT(a.longitude, a.latitude)
-    ) AS distance_m
+    distinct d.vehicle_id as vehicle_id, d.warehouse_id as warehouse_id, w.name as warehouse_name, v.name as vehicle_name, v.url_photo, v.description, v.status,
+            ST_Distance_Sphere(
+                POINT(w.longitude, w.latitude),
+                POINT(a.longitude, a.latitude)
+            ) AS distance_m, v.created_at
 FROM
-    vehicles v
+    drivers d
 JOIN
-    warehouses w ON v.warehouse_id = w.id
+    warehouses w ON d.warehouse_id = w.id
+JOIN
+    vehicles v ON d.vehicle_id = v.id
 JOIN
     addresses a ON a.user_id = ? AND a.is_primary = 1
 ORDER BY
-    distance_m;
+    distance_m, v.created_at
 	`
 
-	err := tx.Select(dest, q, user_id)
+	err := tx.Select(dest, q, userID)
 	if err != nil {
 		fmt.Println("error nih: " + err.Error())
 		return err

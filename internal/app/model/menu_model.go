@@ -41,13 +41,15 @@ type ExploreItems struct {
 }
 
 type ExploreTimeToCleanUp struct {
-	VehicleID       string  `json:"vehicle_id" db:"id"`
-	VehicleName     string  `json:"vehicle_name" db:"name"`
+	WarehouseID     string  `json:"warehouse_id" db:"warehouse_id"`
+	WarehouseName   string  `json:"warehouse_name" db:"warehouse_name"`
+	VehicleID       string  `json:"vehicle_id" db:"vehicle_id"`
+	VehicleName     string  `json:"vehicle_name" db:"vehicle_name"`
 	UrlPhoto        string  `json:"url_photo" db:"url_photo"`
 	Description     string  `json:"description" db:"description"`
 	Status          string  `json:"status" db:"status"`
-	WarehouseName   string  `json:"warehouse_name" db:"warehouse_name"`
 	DistanceVehicle float64 `json:"distance_on_meter" db:"distance_m"`
+	CreatedAt       int64   `json:"-" db:"created_at"`
 }
 
 type HotItemsSlice struct {

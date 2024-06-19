@@ -1,8 +1,8 @@
 package model
 
 type MyWishlist struct {
-	TotalCart int `json:"total_cart"`
-	Product   []ExploreItems
+	TotalCart int            `json:"total_cart"`
+	Product   []ExploreItems `json:"products"`
 }
 
 type RequestManageWishlist struct {

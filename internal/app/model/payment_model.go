@@ -4,6 +4,7 @@ import "github.com/ahmdyaasiin/magotify-backend/internal/app/entity"
 
 type ServicesOngkir struct {
 	Name        string `json:"name"`
+	Service     string `json:"service"`
 	Description string `json:"description"`
 	Cost        int    `json:"cost"`
 	Estimation  string `json:"estimation"`
@@ -29,12 +30,26 @@ type PaymentShop struct {
 	Addresses     []entity.Address `json:"addresses"`
 	Product       []ProductCart    `json:"products"`
 	Services      []ServicesOngkir `json:"services"`
+	RecentVoucher entity.Voucher   `json:"recent_voucher"`
+	Vouchers      []entity.Voucher `json:"vouchers"`
+}
+
+type PaymentPickUp struct {
+	RecentAddress    entity.Address   `json:"recent_address"`
+	Addresses        []entity.Address `json:"addresses"`
+	WarehouseDetails entity.Warehouse `json:"warehouse_details"`
+	RecentVehicles   entity.Vehicle   `json:"recent_vehicles"`
+	Vehicles         []entity.Vehicle `json:"vehicles"`
+	RecentVoucher    entity.Voucher   `json:"recent_voucher"`
+	Vouchers         []entity.Voucher `json:"vouchers"`
 }
 
 type RequestCreatePayment struct {
 	ProductIDs     []string `json:"product_ids"`
+	Quantities     []string `json:"quantities"`
 	AddressID      string   `json:"address_id"`
-	DiscountID     string   `json:"discount_id"`
+	VoucherID      string   `json:"voucher_id"`
+	ExpeditionName string   `json:"expedition_name"`
 	ExpeditionType string   `json:"expedition_type"`
 }
 

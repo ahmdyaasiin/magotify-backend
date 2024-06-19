@@ -43,10 +43,10 @@ func (c *Config) V1() {
 	product.Get(":productId/details", c.ProductController.GetProductDetails)
 
 	payment := v1.Group("/payment")
-	//payment.Get("pick-up")
-	payment.Post("validate", c.PaymentController.ValidatePayment)
 	payment.Get("shop", c.PaymentController.GetPaymentShop)
+	payment.Get("pick_up", c.PaymentController.GetPaymentPickUp)
 	payment.Post("shop/create", c.PaymentController.CreatePaymentShop)
+	payment.Post("validate", c.PaymentController.ValidatePayment)
 
 	//transaction := v1.Group("/transaction")
 	//transaction.Get("pick-up")

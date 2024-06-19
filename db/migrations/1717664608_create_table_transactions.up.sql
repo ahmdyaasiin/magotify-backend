@@ -1,8 +1,14 @@
 create table transactions
 (
     id varchar(36) not null,
-    total_amount float not null,
+    no_invoice varchar(27) not null,
+    total_amount float not null, -- real price without discount
+    shipping_costs float not null,
     status varchar(100) not null,
+    service_name varchar(100) not null,
+    service_type varchar(100) not null,
+    receipt_number varchar(100) not null,
+    payment_type varchar(100) not null,
     created_at bigint not null,
     updated_at bigint not null,
     user_id varchar(36) not null,

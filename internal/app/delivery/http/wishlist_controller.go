@@ -33,7 +33,7 @@ func (c *WishlistController) GetWishlist(ctx *fiber.Ctx) error {
 	}
 
 	return ctx.JSON(response.Success{
-		Message: "Success get Explore",
+		Message: "Success get Wishlist",
 		Data:    res,
 		Status: response.Status{
 			Code:    fiber.StatusOK,

@@ -91,6 +91,8 @@ func (r *CartRepository) MyCart(tx *sqlx.Tx, myCart *[]model.ProductCart, user *
         p.id,
         p.name as name,
         p.price,
+        p.weight,
+        p.price * (1 - p.discount_percentage / 100) AS discount_price,
         c.quantity,
         (SELECT url_photo FROM media m WHERE m.product_id = p.id ORDER BY m.url_photo LIMIT 1) as url_photo,
         cat.name as cat_name

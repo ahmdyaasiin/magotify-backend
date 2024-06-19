@@ -34,13 +34,16 @@ func App(config *AppConfig) {
 	ratingRepository := repository.NewRatingRepository(config.DB)
 	paymentRepository := repository.NewPaymentRepository(config.DB)
 	categoryRepository := repository.NewCategoryRepository(config.DB)
+	warehouseRepository := repository.NewWarehouseRepository(config.DB)
+	vehiclesRepository := repository.NewVehicleRepository(config.DB)
+	driverRepository := repository.NewDriverRepository(config.DB)
 
 	userUseCase := usecase.NewUserUseCase(config.DB, config.Log, userRepository, addressRepository)
 	menuUseCase := usecase.NewMenuUseCase(config.DB, config.Log, menuRepository, userRepository, addressRepository, voucherRepository, cartRepository, bannerRepository, categoryRepository)
-	cartUseCase := usecase.NewCartUseCase(config.DB, config.Log, menuRepository, userRepository, cartRepository, productRepository)
+	cartUseCase := usecase.NewCartUseCase(config.DB, config.Log, menuRepository, userRepository, cartRepository, productRepository, categoryRepository)
 	wishlistUseCase := usecase.NewWishlistUseCase(config.DB, config.Log, userRepository, wishlistRepository, cartRepository, productRepository)
 	productUseCase := usecase.NewProductUseCase(config.DB, config.Log, productRepository, userRepository, cartRepository, mediaRepository, ratingRepository)
-	paymentUseCase := usecase.NewPaymentUseCase(config.DB, config.Log, paymentRepository, userRepository, addressRepository)
+	paymentUseCase := usecase.NewPaymentUseCase(config.DB, config.Log, paymentRepository, userRepository, addressRepository, voucherRepository, warehouseRepository, vehiclesRepository, driverRepository, productRepository)
 
 	serverController := http.NewServerController()
 	userController := http.NewUserController(config.Log, config.Validator, userUseCase)

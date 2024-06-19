@@ -62,6 +62,52 @@ func (c *PaymentController) CreatePaymentShop(ctx *fiber.Ctx) error {
 	})
 }
 
+func (c *PaymentController) GetPaymentPickUp(ctx *fiber.Ctx) error {
+
+	// address_id (optional)
+	// warehouse_id
+	// vehicles_id (optional)
+	// jenis_sampah (optional?)
+	// berat_sampah (optional?)
+	// voucher_id (optional)
+
+	// recent address/primary address
+	// addresses except recent address
+	// warehouse details
+	// jenis jenis sampah
+	// berat sampah
+	// jenis jenis kendaraan
+	// recent voucher
+	// vouchers
+
+	auth := middleware.GetUser(ctx)
+
+	addressID := ctx.Query("address_id")
+	warehouseID := ctx.Query("warehouse_id")
+	vehiclesID := ctx.Query("vehicles_id")
+	//wasteType := ctx.Query("waste_type")
+	//wasteWeight := ctx.Query("waste_weight")
+	voucherID := ctx.Query("voucher_id")
+
+	if warehouseID == "" {
+		return ctx.JSON(response.Message{Message: "warehouse_id mana?"})
+	}
+
+	res, err := c.PaymentUseCase.PickUp(auth, warehouseID, addressID, vehiclesID, voucherID)
+	if err != nil {
+		return err
+	}
+
+	return ctx.JSON(response.Success{
+		Message: "Success get Payment Pick Up",
+		Data:    res,
+		Status: response.Status{
+			Code:    fiber.StatusOK,
+			Message: "OK",
+		},
+	})
+}
+
 func (c *PaymentController) GetPaymentShop(ctx *fiber.Ctx) error {
 	auth := middleware.GetUser(ctx)
 
@@ -71,6 +117,10 @@ func (c *PaymentController) GetPaymentShop(ctx *fiber.Ctx) error {
 	//if addressID == "" {
 	//	return ctx.JSON(response.Message{Message: "Address ID nya mana"})
 	//}
+
+	voucherID := ctx.Query("voucher_id")
+
+	// gapake voucher if empty
 
 	productIdsParam := ctx.Query("product_ids")
 	productIds := strings.Split(productIdsParam, ",")
@@ -93,7 +143,7 @@ func (c *PaymentController) GetPaymentShop(ctx *fiber.Ctx) error {
 
 	// add validasi jika quantity mines
 
-	res, err := c.PaymentUseCase.Shop(auth, productIds, addressID, quantites)
+	res, err := c.PaymentUseCase.Shop(auth, productIds, addressID, quantites, voucherID)
 	if err != nil {
 		return err
 	}
