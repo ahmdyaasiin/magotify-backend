@@ -1,7 +1,6 @@
 package http
 
 import (
-	"fmt"
 	"github.com/ahmdyaasiin/magotify-backend/internal/app/delivery/http/middleware"
 	"github.com/ahmdyaasiin/magotify-backend/internal/app/model"
 	"github.com/ahmdyaasiin/magotify-backend/internal/app/usecase"
@@ -26,9 +25,86 @@ func NewPaymentController(log *logrus.Logger, val *validator.Validate, pu usecas
 	}
 }
 
-func (c *PaymentController) ValidatePayment(ctx *fiber.Ctx) error {
+func (c *PaymentController) ValidatePaymentPickUp(ctx *fiber.Ctx) error {
 
-	return nil
+	request := new(model.RequestValidatePayment)
+
+	if err := ctx.BodyParser(request); err != nil {
+		return fiber.ErrBadRequest
+	}
+
+	if err := c.Validator.Struct(request); err != nil {
+		return err
+	}
+
+	res, err := c.PaymentUseCase.ValidatePickUp(request)
+	if err != nil {
+		return err
+	}
+
+	return ctx.JSON(response.Success{
+		Message: "Success validate Payment",
+		Data:    res,
+		Status: response.Status{
+			Code:    fiber.StatusOK,
+			Message: "OK",
+		},
+	})
+}
+
+func (c *PaymentController) ValidatePaymentShop(ctx *fiber.Ctx) error {
+
+	request := new(model.RequestValidatePayment)
+
+	if err := ctx.BodyParser(request); err != nil {
+		return fiber.ErrBadRequest
+	}
+
+	if err := c.Validator.Struct(request); err != nil {
+		return err
+	}
+
+	res, err := c.PaymentUseCase.ValidateShop(request)
+	if err != nil {
+		return err
+	}
+
+	return ctx.JSON(response.Success{
+		Message: "Success validate Payment",
+		Data:    res,
+		Status: response.Status{
+			Code:    fiber.StatusOK,
+			Message: "OK",
+		},
+	})
+}
+
+func (c *PaymentController) CreatePaymentPickUp(ctx *fiber.Ctx) error {
+	auth := middleware.GetUser(ctx)
+
+	request := new(model.RequestCreatePickUp)
+
+	if err := ctx.BodyParser(request); err != nil {
+		return fiber.ErrBadRequest
+	}
+
+	if err := c.Validator.Struct(request); err != nil {
+		return err
+	}
+
+	res, err := c.PaymentUseCase.CreatePickUp(auth, request)
+	if err != nil {
+		return err
+	}
+
+	return ctx.JSON(response.Success{
+		Message: "Success Create Pick Up",
+		Data:    res,
+		Status: response.Status{
+			Code:    fiber.StatusOK,
+			Message: "OK",
+		},
+	})
 }
 
 func (c *PaymentController) CreatePaymentShop(ctx *fiber.Ctx) error {
@@ -43,8 +119,6 @@ func (c *PaymentController) CreatePaymentShop(ctx *fiber.Ctx) error {
 	if err := c.Validator.Struct(request); err != nil {
 		return err
 	}
-
-	fmt.Println(request)
 
 	// usecase
 	res, err := c.PaymentUseCase.CreateShop(auth, request)

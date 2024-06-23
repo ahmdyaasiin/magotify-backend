@@ -15,7 +15,9 @@ func ForCreate(entity TableInterface) string {
 	for i := 0; i < entityType.NumField(); i++ {
 		field := entityType.Field(i)
 		fieldValue := entityValue.Field(i)
-		if isZero(fieldValue) {
+
+		canZero := strings.Contains(field.Tag.Get("rules"), "can_zero")
+		if isZero(fieldValue) && !canZero {
 			continue
 		}
 
@@ -35,7 +37,9 @@ func ForUpdate(entity TableInterface) string {
 	for i := 0; i < entityType.NumField(); i++ {
 		field := entityType.Field(i)
 		fieldValue := entityValue.Field(i)
-		if isZero(fieldValue) {
+
+		canZero := strings.Contains(field.Tag.Get("rules"), "can_zero")
+		if isZero(fieldValue) && !canZero {
 			continue
 		}
 

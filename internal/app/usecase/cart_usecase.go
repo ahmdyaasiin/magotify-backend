@@ -148,8 +148,8 @@ func (u *CartUseCase) AddCart(auth string, request *model.RequestAddCart) (*mode
 			err = u.CartRepository.Create(tx, &entity.Cart{
 				ID:        uuid.NewString(),
 				Quantity:  request.Quantity,
-				CreatedAt: time.Now().Local().Unix(),
-				UpdatedAt: time.Now().Local().Unix(),
+				CreatedAt: time.Now().Local().UnixNano(),
+				UpdatedAt: time.Now().Local().UnixNano(),
 				UserID:    user.ID,
 				ProductID: request.ProductID,
 			})
@@ -158,7 +158,7 @@ func (u *CartUseCase) AddCart(auth string, request *model.RequestAddCart) (*mode
 			}
 		} else { // update
 			cart.Quantity = request.Quantity
-			cart.UpdatedAt = time.Now().Local().Unix()
+			cart.UpdatedAt = time.Now().Local().UnixNano()
 			err = u.CartRepository.Update(tx, cart)
 			if err != nil {
 				return nil, err

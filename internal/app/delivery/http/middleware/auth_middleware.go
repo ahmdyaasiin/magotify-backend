@@ -11,6 +11,10 @@ import (
 
 func NewUserMiddleware(u usecase.InterfaceUserUseCase) fiber.Handler {
 	return func(ctx *fiber.Ctx) error {
+		if ctx.Path() == "/v1/payment/validate" {
+			return ctx.Next()
+		}
+
 		bearerArray := ctx.GetReqHeaders()["Authorization"]
 
 		var bearer string

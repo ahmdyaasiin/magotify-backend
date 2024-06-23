@@ -8,6 +8,8 @@ import (
 
 type InterfaceDriverRepository interface {
 	//
+	FindBy(tx *sqlx.Tx, column string, value string, entity *entity.Driver) error
+	FindAvailableDriver(tx *sqlx.Tx, warehouseID string, vehicleID string, dest *entity.Driver) error
 	GetSpecificDriver(tx *sqlx.Tx, dest *entity.Vehicle, vehicleID string, warehouseID string) error
 	GetDriverExcept(tx *sqlx.Tx, dest *[]entity.Vehicle, vehicleID string, warehouseID string) error
 }
@@ -21,6 +23,54 @@ func NewDriverRepository(db *sqlx.DB) InterfaceDriverRepository {
 	return &DriverRepository{
 		DB: db,
 	}
+}
+
+func (r *DriverRepository) FindBy(tx *sqlx.Tx, column string, value string, entity *entity.Driver) error {
+	q := fmt.Sprintf("SELECT * FROM drivers WHERE %s = :value", column)
+	param := map[string]any{
+		"value": value,
+	}
+
+	stmt, err := tx.PrepareNamed(q)
+	if err != nil {
+		return err
+	}
+
+	err = stmt.Get(entity, param)
+	if err != nil {
+		return err
+	}
+
+	return err
+}
+
+func (r *DriverRepository) FindAvailableDriver(tx *sqlx.Tx, warehouseID string, vehicleID string, dest *entity.Driver) error {
+	q := `
+SELECT
+    d.id, d.vehicle_id,
+    COUNT(o.id) AS total_order,
+    d.created_at
+FROM
+    drivers d
+LEFT JOIN
+    orders o ON d.id = o.driver_id
+WHERE
+    d.warehouse_id = ? AND
+    d.vehicle_id = ?
+GROUP BY
+    d.id, d.created_at
+HAVING
+    SUM(IF(o.status = 'in-progress' or o.status = 'waiting-for-payment', 1, 0)) = 0
+ORDER BY
+    total_order, d.created_at;
+	`
+
+	err := tx.Get(dest, q, warehouseID, vehicleID)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (r *DriverRepository) GetSpecificDriver(tx *sqlx.Tx, dest *entity.Vehicle, vehicleID string, warehouseID string) error {

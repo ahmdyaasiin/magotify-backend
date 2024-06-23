@@ -66,7 +66,7 @@ func (u *UserUseCase) Create(request *model.RequestUserRegister) (*model.Respons
 		return nil, err
 	}
 
-	now := time.Now().Local().Unix()
+	now := time.Now().Local().UnixNano()
 
 	user.ID = uuid.NewString()
 	user.Name = request.FullName

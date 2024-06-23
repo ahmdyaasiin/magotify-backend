@@ -37,13 +37,17 @@ func App(config *AppConfig) {
 	warehouseRepository := repository.NewWarehouseRepository(config.DB)
 	vehiclesRepository := repository.NewVehicleRepository(config.DB)
 	driverRepository := repository.NewDriverRepository(config.DB)
+	transactionRepository := repository.NewTransactionRepository(config.DB)
+	transactionItemRepository := repository.NewTransactionItemRepository(config.DB)
+	orderRepository := repository.NewOrderRepository(config.DB)
 
 	userUseCase := usecase.NewUserUseCase(config.DB, config.Log, userRepository, addressRepository)
 	menuUseCase := usecase.NewMenuUseCase(config.DB, config.Log, menuRepository, userRepository, addressRepository, voucherRepository, cartRepository, bannerRepository, categoryRepository)
 	cartUseCase := usecase.NewCartUseCase(config.DB, config.Log, menuRepository, userRepository, cartRepository, productRepository, categoryRepository)
 	wishlistUseCase := usecase.NewWishlistUseCase(config.DB, config.Log, userRepository, wishlistRepository, cartRepository, productRepository)
 	productUseCase := usecase.NewProductUseCase(config.DB, config.Log, productRepository, userRepository, cartRepository, mediaRepository, ratingRepository)
-	paymentUseCase := usecase.NewPaymentUseCase(config.DB, config.Log, paymentRepository, userRepository, addressRepository, voucherRepository, warehouseRepository, vehiclesRepository, driverRepository, productRepository)
+	paymentUseCase := usecase.NewPaymentUseCase(config.DB, config.Log, paymentRepository, userRepository, addressRepository, voucherRepository, warehouseRepository, vehiclesRepository, driverRepository, productRepository, transactionRepository, transactionItemRepository, orderRepository)
+	transactionUseCase := usecase.NewTransactionUseCase(config.DB, config.Log, transactionRepository, userRepository)
 
 	serverController := http.NewServerController()
 	userController := http.NewUserController(config.Log, config.Validator, userUseCase)
@@ -52,19 +56,21 @@ func App(config *AppConfig) {
 	wishlistController := http.NewWishlistController(config.Log, config.Validator, wishlistUseCase)
 	productController := http.NewProductController(config.Log, config.Validator, productUseCase)
 	paymentController := http.NewPaymentController(config.Log, config.Validator, paymentUseCase)
+	transactionController := http.NewTransactionController(config.Log, config.Validator, transactionUseCase)
 
 	userMiddleware := middleware.NewUserMiddleware(userUseCase)
 
 	routeConfig := &route.Config{
-		App:                config.App,
-		ServerController:   serverController,
-		UserController:     userController,
-		MenuController:     menuController,
-		CartController:     cartController,
-		Middleware:         userMiddleware,
-		WishlistController: wishlistController,
-		ProductController:  productController,
-		PaymentController:  paymentController,
+		App:                   config.App,
+		ServerController:      serverController,
+		UserController:        userController,
+		MenuController:        menuController,
+		CartController:        cartController,
+		Middleware:            userMiddleware,
+		WishlistController:    wishlistController,
+		ProductController:     productController,
+		PaymentController:     paymentController,
+		TransactionController: transactionController,
 	}
 
 	routeConfig.Setup()

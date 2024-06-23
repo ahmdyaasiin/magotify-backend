@@ -6,17 +6,17 @@ type RequestUserRegister struct {
 	Password    string  `json:"password" db:"password" validate:"required"`
 	PhoneNumber string  `json:"phone_number" db:"phone_number" validate:"required"`
 	Address     string  `json:"address" db:"address" validate:"required"`
-	District    string  `json:"district" db:"district"`
-	City        string  `json:"city" db:"city"`
-	State       string  `json:"state" db:"state"`
-	PostalCode  string  `json:"postal_code" db:"postal_code"`
-	Latitude    float64 `json:"latitude" db:"latitude"`
-	Longitude   float64 `json:"longitude" db:"longitude"`
+	District    string  `json:"district" db:"district" validate:"required"`
+	City        string  `json:"city" db:"city" validate:"required"`
+	State       string  `json:"state" db:"state" validate:"required"`
+	PostalCode  string  `json:"postal_code" db:"postal_code" validate:"required"`
+	Latitude    float64 `json:"latitude" db:"latitude" validate:"required"`
+	Longitude   float64 `json:"longitude" db:"longitude" validate:"required"`
 }
 
 type RequestUserLogin struct {
-	Email    string `json:"email" db:"email"`
-	Password string `json:"password" db:"password"`
+	Email    string `json:"email" db:"email" validate:"required"`
+	Password string `json:"password" db:"password" validate:"required"`
 }
 
 type RequestUserForgotPassword struct {

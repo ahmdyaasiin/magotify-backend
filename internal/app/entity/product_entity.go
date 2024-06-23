@@ -4,7 +4,7 @@ type Product struct {
 	ID                 string  `db:"id"`
 	Name               string  `db:"name"`
 	Description        string  `db:"description"`
-	Quantity           int     `db:"quantity"`
+	Quantity           int     `db:"quantity" rules:"can_zero"`
 	Price              float64 `db:"price"`
 	DiscountPercentage int     `db:"discount_percentage"`
 	Weight             float64 `db:"weight"`
@@ -14,5 +14,5 @@ type Product struct {
 }
 
 func (e Product) GetTableName() string {
-	return "product"
+	return "products"
 }

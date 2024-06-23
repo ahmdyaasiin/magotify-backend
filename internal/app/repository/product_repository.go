@@ -4,11 +4,13 @@ import (
 	"fmt"
 	"github.com/ahmdyaasiin/magotify-backend/internal/app/entity"
 	"github.com/ahmdyaasiin/magotify-backend/internal/app/model"
+	"github.com/ahmdyaasiin/magotify-backend/internal/pkg/query"
 	"github.com/jmoiron/sqlx"
 )
 
 type InterfaceProductRepository interface {
 	//
+	Update(tx *sqlx.Tx, product *entity.Product) error
 	FindBy(tx *sqlx.Tx, column string, value string, entity *entity.Product) error
 	ProductDetails(tx *sqlx.Tx, details *model.PD, user *entity.User, productID string) error
 	ProductBestOfferWithout(tx *sqlx.Tx, products *[]model.ExploreItems, productID string) error
@@ -23,6 +25,14 @@ func NewProductRepository(db *sqlx.DB) InterfaceProductRepository {
 	return &ProductRepository{
 		DB: db,
 	}
+}
+
+func (r *ProductRepository) Update(tx *sqlx.Tx, product *entity.Product) error {
+
+	fmt.Println(query.ForUpdate(product))
+
+	_, err := tx.NamedExec(query.ForUpdate(product), product)
+	return err
 }
 
 func (r *ProductRepository) FindBy(tx *sqlx.Tx, column string, value string, entity *entity.Product) error {

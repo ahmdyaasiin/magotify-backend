@@ -2,29 +2,21 @@ package midtrans
 
 import (
 	"fmt"
-	"github.com/ahmdyaasiin/magotify-backend/internal/app/entity"
-	"github.com/google/uuid"
 	"github.com/midtrans/midtrans-go"
 	"github.com/midtrans/midtrans-go/coreapi"
 	"github.com/midtrans/midtrans-go/snap"
 	"os"
 )
 
-func CreateToken(idTransaction uuid.UUID, product *entity.Product) (string, error) {
+func CreateToken(idTransaction string, totalAmount int64) (string, error) {
 	serverKey := os.Getenv("MIDTRANS_SERVER_KEY")
 	req := &snap.Request{
 		TransactionDetails: midtrans.TransactionDetails{
-			OrderID:  idTransaction.String(),
-			GrossAmt: int64(product.Price),
+			OrderID:  idTransaction,
+			GrossAmt: totalAmount,
 		},
-		Callbacks: &snap.Callbacks{
-			Finish: fmt.Sprintf("%s/transaction", "https://example.com"),
-		},
-		EnabledPayments: []snap.SnapPaymentType{
-			snap.PaymentTypeGopay,
-			snap.PaymentTypeShopeepay,
-			snap.PaymentTypeBankTransfer,
-		},
+		Callbacks:       nil,
+		EnabledPayments: snap.AllSnapPaymentType,
 		Expiry: &snap.ExpiryDetails{
 			Duration: 5,
 			Unit:     "minute",
@@ -33,23 +25,23 @@ func CreateToken(idTransaction uuid.UUID, product *entity.Product) (string, erro
 
 	var client snap.Client
 	client.New(serverKey, midtrans.Sandbox)
-	client.Options.SetPaymentOverrideNotification(fmt.Sprintf("%s/product/payment/callback", "https://example.com"))
+	client.Options.SetPaymentOverrideNotification(fmt.Sprintf("%s/payment/validate", "http://pasti-dihit-ini-cok-dijamin.com/v1"))
 
 	snapResp, err := client.CreateTransactionToken(req)
 	if err != nil {
 		return "", err
 	}
 
-	return snapResp, err
+	return snapResp, nil
 }
 
-func VerifyPayment(idTransaction uuid.UUID) (*coreapi.TransactionStatusResponse, error) {
+func VerifyPayment(idTransaction string) (*coreapi.TransactionStatusResponse, error) {
 	serverKey := os.Getenv("MIDTRANS_SERVER_KEY")
 
 	var client coreapi.Client
 	client.New(serverKey, midtrans.Sandbox)
 
-	transactionStatusResp, e := client.CheckTransaction(idTransaction.String())
+	transactionStatusResp, e := client.CheckTransaction(idTransaction)
 	if e != nil {
 		return nil, e
 	} else {

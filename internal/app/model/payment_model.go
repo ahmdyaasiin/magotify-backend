@@ -42,6 +42,7 @@ type PaymentPickUp struct {
 	Vehicles         []entity.Vehicle `json:"vehicles"`
 	RecentVoucher    entity.Voucher   `json:"recent_voucher"`
 	Vouchers         []entity.Voucher `json:"vouchers"`
+	Distance         float64          `json:"distance"`
 }
 
 type RequestCreatePayment struct {
@@ -53,6 +54,38 @@ type RequestCreatePayment struct {
 	ExpeditionType string   `json:"expedition_type"`
 }
 
+type RequestCreatePickUp struct {
+	Weight      float64 `json:"weight"`
+	AddressID   string  `json:"address_id"`
+	WarehouseID string  `json:"warehouse_id"`
+	VehicleID   string  `json:"vehicle_id"`
+	VoucherID   string  `json:"voucher_id"`
+	//
+}
+
+type FirebaseTracking struct {
+	DriverID        string  `json:"driver_id"`
+	DriverLatitude  float64 `json:"driver_latitude"`
+	DriverLongitude float64 `json:"driver_longitude"`
+	UserID          string  `json:"user_id"`
+	CreatedAt       int64   `json:"created_at"`
+	UpdatedAt       int64   `json:"updated_at"`
+}
+
+type RequestValidatePayment struct {
+	OrderID           string `json:"order_id"`
+	TransactionStatus string `json:"transaction_status"`
+	PaymentType       string `json:"payment_type"`
+	FraudStatus       string `json:"fraud_status"`
+	SignatureKey      string `json:"signature_key"`
+	StatusCode        string `json:"status_code"`
+	GrossAmount       string `json:"gross_amount"`
+}
+
 type ResponseCreatePayment struct {
 	PaymentID string `json:"payment_id"`
+}
+
+type ResponseValidatePayment struct {
+	IsPaid bool `json:"is_paid"`
 }

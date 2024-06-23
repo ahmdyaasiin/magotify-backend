@@ -78,7 +78,7 @@ func (u *WishlistUseCase) AddWishlist(auth string, request *model.RequestManageW
 		message = "success add product"
 		err = u.WishlistRepository.Create(tx, &entity.Wishlist{
 			ID:        uuid.NewString(),
-			CreatedAt: time.Now().Local().Unix(),
+			CreatedAt: time.Now().Local().UnixNano(),
 			UserID:    user.ID,
 			ProductID: request.ProductID,
 		})

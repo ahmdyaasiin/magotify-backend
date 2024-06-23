@@ -57,3 +57,14 @@ func DecodeCustomToken(idToken string) (string, error) {
 
 	return token.UID, nil
 }
+
+func SaveData(path string, values any) error {
+
+	ref := firebaseClient.NewRef(path)
+	if err := ref.Set(ctx, values); err != nil {
+
+		return err
+	}
+
+	return nil
+}

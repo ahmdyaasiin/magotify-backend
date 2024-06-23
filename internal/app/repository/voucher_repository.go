@@ -3,11 +3,13 @@ package repository
 import (
 	"fmt"
 	"github.com/ahmdyaasiin/magotify-backend/internal/app/entity"
+	"github.com/ahmdyaasiin/magotify-backend/internal/pkg/query"
 	"github.com/jmoiron/sqlx"
 )
 
 type InterfaceVoucherRepository interface {
 	//
+	Update(tx *sqlx.Tx, voucher *entity.Voucher) error
 	TotalVouchers(tx *sqlx.Tx, totalVoucher *int, user *entity.User) error
 	FindBy(tx *sqlx.Tx, column string, value string, entity *entity.Voucher, user *entity.User) error
 	FindExcept(tx *sqlx.Tx, voucherID string, vouchers *[]entity.Voucher, user *entity.User) error
@@ -24,7 +26,12 @@ func NewVoucherRepository(db *sqlx.DB) InterfaceVoucherRepository {
 	}
 }
 
-func (r VoucherRepository) TotalVouchers(tx *sqlx.Tx, totalVoucher *int, user *entity.User) error {
+func (r *VoucherRepository) Update(tx *sqlx.Tx, voucher *entity.Voucher) error {
+	_, err := tx.NamedExec(query.ForUpdate(voucher), voucher)
+	return err
+}
+
+func (r *VoucherRepository) TotalVouchers(tx *sqlx.Tx, totalVoucher *int, user *entity.User) error {
 	q := "SELECT COUNT(*) FROM vouchers WHERE user_id = :user_id AND status = 1"
 	param := map[string]any{
 		"user_id": user.ID,

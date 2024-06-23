@@ -9,6 +9,7 @@ import (
 
 type InterfaceAddressRepository interface {
 	//
+	GetDistance(tx *sqlx.Tx, dest *float64, addressID string, warehouseID string) error
 	Create(tx *sqlx.Tx, address *entity.Address) error
 	GetPrimaryAddress(tx *sqlx.Tx, address *entity.Address, user *entity.User) error
 	FindBy(tx *sqlx.Tx, column string, value string, entity *entity.Address) error
@@ -49,6 +50,30 @@ func (r *AddressRepository) GetPrimaryAddress(tx *sqlx.Tx, address *entity.Addre
 	}
 
 	return nil
+}
+
+func (r *AddressRepository) GetDistance(tx *sqlx.Tx, dest *float64, addressID string, warehouseID string) error {
+	q := `
+SELECT
+    ST_Distance_Sphere(
+        POINT(w.longitude, w.latitude),
+        POINT(a.longitude, a.latitude)
+    ) AS distance_m
+FROM
+    addresses a
+JOIN
+    warehouses w ON w.id = ?
+WHERE
+    a.id = ?
+	`
+
+	err := tx.Get(dest, q, addressID, warehouseID)
+	if err != nil {
+		return err
+	}
+
+	return nil
+
 }
 
 func (r *AddressRepository) FindExcept(tx *sqlx.Tx, addressID string, addresses *[]entity.Address, user *entity.User) error {
