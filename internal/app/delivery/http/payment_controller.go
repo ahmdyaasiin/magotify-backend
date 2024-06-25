@@ -31,6 +31,9 @@ func (c *PaymentController) ValidatePaymentPickUp(ctx *fiber.Ctx) error {
 	request := new(model.RequestValidatePayment)
 
 	if err := ctx.BodyParser(request); err != nil {
+
+		fmt.Println(err)
+
 		return fiber.ErrBadRequest
 	}
 
@@ -128,6 +131,8 @@ func (c *PaymentController) CreatePaymentShop(ctx *fiber.Ctx) error {
 	if err := c.Validator.Struct(request); err != nil {
 		return err
 	}
+
+	fmt.Println(request)
 
 	// usecase
 	res, err := c.PaymentUseCase.CreateShop(auth, request)

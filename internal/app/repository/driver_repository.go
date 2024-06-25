@@ -48,7 +48,6 @@ func (r *DriverRepository) FindAvailableDriver(tx *sqlx.Tx, warehouseID string, 
 	q := `
 SELECT
     d.id, d.vehicle_id,
-    COUNT(o.id) AS total_order,
     d.created_at
 FROM
     drivers d
@@ -62,7 +61,7 @@ GROUP BY
 HAVING
     SUM(IF(o.status = 'in-progress' or o.status = 'waiting-for-payment', 1, 0)) = 0
 ORDER BY
-    total_order, d.created_at;
+    COUNT(o.id), d.created_at;
 	`
 
 	err := tx.Get(dest, q, warehouseID, vehicleID)

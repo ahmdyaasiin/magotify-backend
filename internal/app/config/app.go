@@ -6,6 +6,7 @@ import (
 	"github.com/ahmdyaasiin/magotify-backend/internal/app/delivery/http/route"
 	"github.com/ahmdyaasiin/magotify-backend/internal/app/repository"
 	"github.com/ahmdyaasiin/magotify-backend/internal/app/usecase"
+	"github.com/ahmdyaasiin/magotify-backend/internal/scheduler"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/jmoiron/sqlx"
@@ -75,5 +76,6 @@ func App(config *AppConfig) {
 		TransactionController: transactionController,
 	}
 
+	scheduler.Run(transactionUseCase)
 	routeConfig.Setup()
 }

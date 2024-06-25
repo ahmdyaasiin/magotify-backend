@@ -46,12 +46,12 @@ type PaymentPickUp struct {
 }
 
 type RequestCreatePayment struct {
-	ProductIDs     []string `json:"product_ids"`
-	Quantities     []string `json:"quantities"`
-	AddressID      string   `json:"address_id"`
+	ProductIDs     []string `json:"product_ids" validate:"required"`
+	Quantities     []string `json:"quantities" validate:"required"`
+	AddressID      string   `json:"address_id" validate:"required"`
 	VoucherID      string   `json:"voucher_id"`
-	ExpeditionName string   `json:"expedition_name"`
-	ExpeditionType string   `json:"expedition_type"`
+	ExpeditionName string   `json:"expedition_name" validate:"required"`
+	ExpeditionType string   `json:"expedition_type" validate:"required"`
 }
 
 type RequestCreatePickUp struct {

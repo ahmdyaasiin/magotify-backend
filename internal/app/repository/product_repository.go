@@ -14,6 +14,7 @@ type InterfaceProductRepository interface {
 	FindBy(tx *sqlx.Tx, column string, value string, entity *entity.Product) error
 	ProductDetails(tx *sqlx.Tx, details *model.PD, user *entity.User, productID string) error
 	ProductBestOfferWithout(tx *sqlx.Tx, products *[]model.ExploreItems, productID string) error
+	RollBackQuantityIfCancel(tx *sqlx.Tx, transactionID string) error
 }
 
 type ProductRepository struct {
@@ -117,6 +118,23 @@ WHERE
 	err = stmt.Get(details, param)
 	if err != nil {
 		fmt.Println("error 2x: " + err.Error())
+		return err
+	}
+
+	return nil
+}
+
+func (r *ProductRepository) RollBackQuantityIfCancel(tx *sqlx.Tx, transactionID string) error {
+
+	q := `
+UPDATE products p
+JOIN transaction_items ti ON p.id = ti.product_id
+SET p.quantity = p.quantity + ti.quantity
+WHERE ti.transaction_id = ?;
+	`
+
+	_, err := tx.Exec(q, transactionID)
+	if err != nil {
 		return err
 	}
 

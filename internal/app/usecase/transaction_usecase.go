@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"fmt"
 	"github.com/ahmdyaasiin/magotify-backend/internal/app/entity"
 	"github.com/ahmdyaasiin/magotify-backend/internal/app/model"
 	"github.com/ahmdyaasiin/magotify-backend/internal/app/repository"
@@ -14,6 +15,8 @@ type InterfaceTransactionUseCase interface {
 	HistoryPickUp(auth string) (*[]model.ResponseTransactionPickUp, error)
 	SpecificPickUp(auth string, transactionID string) (*model.ResponseSpecificTransactionPickUp, error)
 	SpecificShop(auth string, transactionID string) (*model.ResponseSpecificTransactionShop, error)
+	UpdateExpiredTransaction()
+	UpdateExpiredOrder()
 }
 
 type TransactionUseCase struct {
@@ -90,6 +93,55 @@ func (u *TransactionUseCase) SpecificShop(auth string, transactionID string) (*m
 	}
 
 	return transaction, nil
+}
+
+func (u *TransactionUseCase) UpdateExpiredTransaction() {
+
+	fmt.Println("go cron jalan nih cioks [transaction]")
+
+	tx, err := u.DB.Beginx()
+	defer tx.Rollback()
+	if err != nil {
+		fmt.Println("go cron error make transaction [transaction]")
+		return
+	}
+
+	err = u.TransactionRepository.UpdateStatusExpiredTransaction(tx)
+	if err != nil {
+		fmt.Println("go cron error exec repo [transaction]")
+		return
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		fmt.Println("commit error [t]: " + err.Error())
+		return
+	}
+}
+
+func (u *TransactionUseCase) UpdateExpiredOrder() {
+
+	fmt.Println("go cron jalan nih cioks [order]")
+
+	tx, err := u.DB.Beginx()
+	defer tx.Rollback()
+	if err != nil {
+		fmt.Println("go cron error make transaction [order]")
+		return
+	}
+
+	err = u.TransactionRepository.UpdateStatusExpiredOrder(tx)
+	if err != nil {
+		fmt.Println(err)
+		fmt.Println("go cron error exec repo [order]")
+		return
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		fmt.Println("commit error [o]: " + err.Error())
+		return
+	}
 }
 
 func (u *TransactionUseCase) HistoryPickUp(auth string) (*[]model.ResponseTransactionPickUp, error) {

@@ -33,16 +33,19 @@ SELECT
     p.weight,
     (SELECT url_photo FROM media m WHERE m.product_id = p.id ORDER BY m.url_photo LIMIT 1) as url_photo,
     p.price * (1 - p.discount_percentage / 100) AS discount_price,
-    c.name as cat_name
+    c.name as cat_name,
+	ti.quantity
 FROM
     products p
 JOIN
     categories c ON p.category_id = c.id
+JOIN
+    transaction_items ti ON ti.transaction_id = ? AND p.id = ti.product_id
 WHERE
     p.id IN (SELECT ti.product_id FROM transaction_items ti WHERE transaction_id = ?)
     `
 
-	err := tx.Select(dest, q, transactionID)
+	err := tx.Select(dest, q, transactionID, transactionID)
 	if err != nil {
 		return err
 	}

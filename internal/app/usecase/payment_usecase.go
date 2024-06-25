@@ -119,42 +119,55 @@ func (u *PaymentUseCase) ValidatePickUp(request *model.RequestValidatePayment) (
 		if err != nil {
 			return nil, err
 		}
-	}
 
-	var driver entity.Driver
-	err = u.DriverRepository.FindBy(tx, "id", order.DriverID, &driver)
-	if err != nil {
-		return nil, err
-	}
+		var driver entity.Driver
+		err = u.DriverRepository.FindBy(tx, "id", order.DriverID, &driver)
+		if err != nil {
+			return nil, err
+		}
 
-	var warehouse entity.Warehouse
-	err = u.WarehouseRepository.FindBy(tx, "id", driver.ID, &warehouse)
-	if err != nil {
-		return nil, err
-	}
+		fmt.Println("passed 1")
 
-	var address entity.Address
-	err = u.AddressRepository.FindBy(tx, "id", order.AddressID, &address)
-	if err != nil {
-		return nil, err
-	}
+		var warehouse entity.Warehouse
+		err = u.WarehouseRepository.FindBy(tx, "id", driver.WarehouseID, &warehouse)
+		if err != nil {
+			fmt.Println("error warehouse nih: " + err.Error())
+			return nil, err
+		}
 
-	// setup firebase
-	timeNow := time.Now().Local().UnixNano()
-	firebaseTracking := &model.FirebaseTracking{
-		DriverID:        order.DriverID,
-		DriverLatitude:  warehouse.Latitude,
-		DriverLongitude: warehouse.Longitude,
-		UserID:          address.UserID,
-		CreatedAt:       timeNow,
-		UpdatedAt:       timeNow,
-	}
+		fmt.Println("passed 2")
 
-	// add chat node
+		var address entity.Address
+		err = u.AddressRepository.FindBy(tx, "id", order.AddressID, &address)
+		if err != nil {
+			return nil, err
+		}
 
-	err = firebase.SaveData("tracking/"+order.ID, firebaseTracking)
-	if err != nil {
-		return nil, err
+		fmt.Println("passed 3")
+
+		// setup firebase
+		timeNow := time.Now().Local().UnixNano()
+		firebaseTracking := &model.FirebaseTracking{
+			DriverID:        order.DriverID,
+			DriverLatitude:  warehouse.Latitude,
+			DriverLongitude: warehouse.Longitude,
+			UserID:          address.UserID,
+			CreatedAt:       timeNow,
+			UpdatedAt:       timeNow,
+		}
+
+		// add chat node
+
+		err = firebase.SaveData("tracking/"+order.ID, firebaseTracking)
+		if err != nil {
+			return nil, err
+		}
+	} else if request.TransactionStatus == "expire" {
+		//
+		err = u.TransactionRepository.UpdateSpecificExpiredOrder(tx, order.ID)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	err = tx.Commit()
@@ -223,6 +236,10 @@ func (u *PaymentUseCase) ValidateShop(request *model.RequestValidatePayment) (*m
 		}
 
 		// if expired add the quantity of products back
+		err = u.ProductRepository.RollBackQuantityIfCancel(tx, transaction.ID)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	err = tx.Commit()
@@ -377,6 +394,7 @@ func (u *PaymentUseCase) CreatePickUp(auth string, request *model.RequestCreateP
 	err = u.DriverRepository.FindAvailableDriver(tx, request.WarehouseID, request.VehicleID, &driver)
 	if err != nil {
 
+		fmt.Println("cioks: " + err.Error())
 		fmt.Println("driver not found")
 
 		return nil, err
@@ -532,11 +550,16 @@ func (u *PaymentUseCase) CreateShop(auth string, request *model.RequestCreatePay
 
 	}
 
+	fmt.Println("passed")
+
 	// check address ID
 	var address entity.Address
 
+	fmt.Println(request)
+
 	err = u.AddressRepository.FindBy(tx, "id", request.AddressID, &address)
 	if err != nil {
+		fmt.Println("ini nih pasti")
 		return nil, err
 	}
 
@@ -558,6 +581,7 @@ func (u *PaymentUseCase) CreateShop(auth string, request *model.RequestCreatePay
 
 		fmt.Println(voucher)
 	}
+	fmt.Println("passed 2")
 
 	// check Expedition
 	var services []model.ServicesOngkir
@@ -571,6 +595,8 @@ func (u *PaymentUseCase) CreateShop(auth string, request *model.RequestCreatePay
 	if err != nil {
 		return nil, err
 	}
+
+	fmt.Println("passed 3")
 
 	ong := 0
 	for _, s := range services {

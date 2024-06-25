@@ -20,7 +20,7 @@ func CreateToken(idTransaction string, totalAmount int64) (string, error) {
 		EnabledPayments: snap.AllSnapPaymentType,
 		Expiry: &snap.ExpiryDetails{
 			Duration: 30,
-			Unit:     "second",
+			Unit:     "seconds",
 		},
 	}
 

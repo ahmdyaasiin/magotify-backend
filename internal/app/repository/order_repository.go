@@ -34,7 +34,7 @@ func (r *OrderRepository) Update(tx *sqlx.Tx, order *entity.Order) error {
 }
 
 func (r *OrderRepository) FindBy(tx *sqlx.Tx, column string, value string, entity *entity.Order) error {
-	q := fmt.Sprintf("SELECT * FROM orders WHERE %s = :value", column)
+	q := fmt.Sprintf("SELECT id, invoice_number, total_amount, weight, status, COALESCE(payment_type, '') as payment_type, created_at, updated_at, address_id, COALESCE(driver_id, '') as driver_id, COALESCE(voucher_id, '') as voucher_id FROM orders WHERE %s = :value", column)
 	param := map[string]any{
 		"value": value,
 	}

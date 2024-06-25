@@ -12,7 +12,7 @@ import (
 
 func NewUserMiddleware(u usecase.InterfaceUserUseCase) fiber.Handler {
 	return func(ctx *fiber.Ctx) error {
-		if ctx.Path() == "/v1/payment/shop/validate" {
+		if ctx.Path() == "/v1/payment/shop/validate" || ctx.Path() == "/v1/payment/pick_up/validate" {
 			return ctx.Next()
 		}
 

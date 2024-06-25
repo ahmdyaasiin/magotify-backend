@@ -9,7 +9,7 @@ create table orders
     created_at bigint not null,
     updated_at bigint not null,
     address_id varchar(36) not null,
-    driver_id varchar(36) not null,
+    driver_id varchar(36),
     voucher_id varchar(36),
     primary key (id),
     foreign key (address_id) references addresses(id),

@@ -6,6 +6,8 @@ import (
 	"github.com/ahmdyaasiin/magotify-backend/internal/app/model"
 	"github.com/ahmdyaasiin/magotify-backend/internal/pkg/query"
 	"github.com/jmoiron/sqlx"
+	"strconv"
+	"time"
 )
 
 type InterfaceTransactionRepository interface {
@@ -17,6 +19,9 @@ type InterfaceTransactionRepository interface {
 	TransactionShop(tx *sqlx.Tx, user *entity.User, entity *[]model.ResponseTransactionShop) error
 	TransactionPickUp(tx *sqlx.Tx, user *entity.User, entity *[]model.ResponseTransactionPickUp) error
 	SpecificTransaction(tx *sqlx.Tx, transactionID string, dest *model.ResponseSpecificTransactionShop) error
+	UpdateStatusExpiredTransaction(tx *sqlx.Tx) error
+	UpdateStatusExpiredOrder(tx *sqlx.Tx) error
+	UpdateSpecificExpiredOrder(tx *sqlx.Tx, orderID string) error
 }
 
 type TransactionRepository struct {
@@ -61,12 +66,37 @@ WHERE
 func (r *TransactionRepository) TransactionShop(tx *sqlx.Tx, user *entity.User, entity *[]model.ResponseTransactionShop) error {
 	q := `
 SELECT
-    t.id, t.invoice_number,
-    a.name as address_name,
-    (t.total_amount+t.shipping_costs) as total_price,
+    t.id,
+    t.invoice_number,
+    a.name AS address_name,
+    (t.total_amount + t.shipping_costs) AS total_price,
     t.created_at,
-    count(ti.id)-1 as total_products,
-    sum(p.weight*ti.quantity) as total_weight
+    (
+        SELECT ti2.quantity
+        FROM transaction_items ti2
+        WHERE ti2.transaction_id = t.id
+        ORDER BY ti2.created_at
+        LIMIT 1
+    ) AS product_quantity,
+    (
+        SELECT p.name
+        FROM transaction_items ti2
+        JOIN products p ON ti2.product_id = p.id
+        WHERE ti2.transaction_id = t.id
+        ORDER BY ti2.created_at
+        LIMIT 1
+    ) AS product_name,
+    (
+        SELECT m.url_photo
+        FROM transaction_items ti2
+        JOIN products p ON ti2.product_id = p.id
+        JOIN media m ON p.id = m.product_id
+        WHERE ti2.transaction_id = t.id
+        ORDER BY ti2.created_at
+        LIMIT 1
+    ) AS product_image,
+    COUNT(ti.id) - 1 AS total_products,
+    SUM(p.weight * ti.quantity) AS total_weight
 FROM
     transactions t
 JOIN
@@ -78,7 +108,9 @@ JOIN
 WHERE
     a.user_id = ?
 GROUP BY
-    t.invoice_number, a.name, (t.total_amount+t.shipping_costs), t.created_at
+    t.id, t.invoice_number, a.name, (t.total_amount + t.shipping_costs), t.created_at
+ORDER BY
+    t.created_at DESC;
     `
 
 	err := tx.Select(entity, q, user.ID)
@@ -92,6 +124,63 @@ GROUP BY
 func (r *TransactionRepository) Update(tx *sqlx.Tx, transaction *entity.Transaction) error {
 	_, err := tx.NamedExec(query.ForUpdate(transaction), transaction)
 	return err
+}
+
+func (r *TransactionRepository) UpdateStatusExpiredTransaction(tx *sqlx.Tx) error {
+	fiveMinutesAgo := time.Now().Local().Add(-1 * 5 * time.Minute).UnixNano()
+
+	q := `
+		UPDATE transactions t SET t.status='cancel' WHERE t.status = 'waiting-for-payment' AND ? > t.created_at
+	`
+
+	res, err := tx.Exec(q, fiveMinutesAgo)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("rows affected nih [t]: " + strconv.FormatInt(rowsAffected, 10))
+
+	return nil
+}
+
+func (r *TransactionRepository) UpdateSpecificExpiredOrder(tx *sqlx.Tx, orderID string) error {
+	q := `
+UPDATE orders o SET o.status='cancel', o.driver_id = null WHERE o.id = ?
+	`
+
+	_, err := tx.Exec(q, orderID)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *TransactionRepository) UpdateStatusExpiredOrder(tx *sqlx.Tx) error {
+	fiveMinutesAgo := time.Now().Local().Add(-1 * 5 * time.Minute).UnixNano()
+
+	q := `
+		UPDATE orders o SET o.status='cancel', o.driver_id = null WHERE o.status = 'waiting-for-payment' AND ? > o.created_at
+	`
+
+	res, err := tx.Exec(q, fiveMinutesAgo)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("rows affected nih [o]: " + strconv.FormatInt(rowsAffected, 10))
+
+	return nil
 }
 
 func (r *TransactionRepository) SpecificTransaction(tx *sqlx.Tx, transactionID string, dest *model.ResponseSpecificTransactionShop) error {
