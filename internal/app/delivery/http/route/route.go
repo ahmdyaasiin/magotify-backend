@@ -9,6 +9,7 @@ type Config struct {
 	//
 	App                   *fiber.App
 	Middleware            fiber.Handler
+	Cors                  fiber.Handler
 	ServerController      *http.ServerController
 	UserController        *http.UserController
 	MenuController        *http.MenuController
@@ -28,12 +29,14 @@ func (c *Config) V1() {
 	v1 := c.App.Group("/v1")
 	v1.Get("status", c.ServerController.Status)
 
+	v1.Use(c.Cors)
+
 	auth := v1.Group("/auth")
 	auth.Post("register", c.UserController.Register)
 	auth.Post("login", c.UserController.Login)
 
 	v1.Use(c.Middleware)
-
+	
 	menu := v1.Group("/menu")
 	menu.Get("explore", c.MenuController.Explore)
 	menu.Get("shop", c.MenuController.Shop)

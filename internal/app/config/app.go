@@ -47,7 +47,7 @@ func App(config *AppConfig) {
 	wishlistUseCase := usecase.NewWishlistUseCase(config.DB, config.Log, userRepository, wishlistRepository, cartRepository, productRepository)
 	productUseCase := usecase.NewProductUseCase(config.DB, config.Log, productRepository, userRepository, cartRepository, mediaRepository, ratingRepository)
 	paymentUseCase := usecase.NewPaymentUseCase(config.DB, config.Log, paymentRepository, userRepository, addressRepository, voucherRepository, warehouseRepository, vehiclesRepository, driverRepository, productRepository, transactionRepository, transactionItemRepository, orderRepository)
-	transactionUseCase := usecase.NewTransactionUseCase(config.DB, config.Log, transactionRepository, userRepository)
+	transactionUseCase := usecase.NewTransactionUseCase(config.DB, config.Log, transactionRepository, userRepository, orderRepository, paymentRepository)
 
 	serverController := http.NewServerController()
 	userController := http.NewUserController(config.Log, config.Validator, userUseCase)
@@ -59,6 +59,7 @@ func App(config *AppConfig) {
 	transactionController := http.NewTransactionController(config.Log, config.Validator, transactionUseCase)
 
 	userMiddleware := middleware.NewUserMiddleware(userUseCase)
+	corsMiddleware := middleware.NewCorsMiddleware()
 
 	routeConfig := &route.Config{
 		App:                   config.App,
@@ -67,6 +68,7 @@ func App(config *AppConfig) {
 		MenuController:        menuController,
 		CartController:        cartController,
 		Middleware:            userMiddleware,
+		Cors:                  corsMiddleware,
 		WishlistController:    wishlistController,
 		ProductController:     productController,
 		PaymentController:     paymentController,

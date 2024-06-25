@@ -22,26 +22,74 @@ type TransactionUseCase struct {
 	Log                   *logrus.Logger
 	TransactionRepository repository.InterfaceTransactionRepository
 	UserRepository        repository.InterfaceUserRepository
+	OrderRepository       repository.InterfaceOrderRepository
+	PaymentRepository     repository.InterfacePaymentRepository
 }
 
-func NewTransactionUseCase(db *sqlx.DB, log *logrus.Logger, tr repository.InterfaceTransactionRepository, ur repository.InterfaceUserRepository) InterfaceTransactionUseCase {
+func NewTransactionUseCase(db *sqlx.DB, log *logrus.Logger, tr repository.InterfaceTransactionRepository, ur repository.InterfaceUserRepository, or repository.InterfaceOrderRepository, pr repository.InterfacePaymentRepository) InterfaceTransactionUseCase {
 	//
 	return &TransactionUseCase{
 		DB:                    db,
 		Log:                   log,
 		TransactionRepository: tr,
 		UserRepository:        ur,
+		OrderRepository:       or,
+		PaymentRepository:     pr,
 	}
 }
 
 func (u *TransactionUseCase) SpecificPickUp(auth string, transactionID string) (*model.ResponseSpecificTransactionPickUp, error) {
+	tx, err := u.DB.Beginx()
+	defer tx.Rollback()
+	if err != nil {
+		return nil, err
+	}
 
-	return nil, nil
+	// get data user
+	user := new(entity.User)
+	err = u.UserRepository.FindBy(tx, "id", auth, user)
+	if err != nil {
+		return nil, err
+	}
+
+	mod := new(model.ResponseSpecificTransactionPickUp)
+	err = u.OrderRepository.SpecificOrder(tx, transactionID, mod)
+	if err != nil {
+		return nil, err
+	}
+
+	return mod, nil
 }
 
 func (u *TransactionUseCase) SpecificShop(auth string, transactionID string) (*model.ResponseSpecificTransactionShop, error) {
+	tx, err := u.DB.Beginx()
+	defer tx.Rollback()
+	if err != nil {
+		return nil, err
+	}
 
-	return nil, nil
+	// get data user
+	user := new(entity.User)
+
+	err = u.UserRepository.FindBy(tx, "id", auth, user)
+	if err != nil {
+		return nil, err
+	}
+
+	transaction := new(model.ResponseSpecificTransactionShop)
+
+	err = u.TransactionRepository.SpecificTransaction(tx, transactionID, transaction)
+	if err != nil {
+		return nil, err
+	}
+
+	// add products for transaction variable
+	err = u.PaymentRepository.ProductsForTransactionDetails(tx, transactionID, &transaction.Products)
+	if err != nil {
+		return nil, err
+	}
+
+	return transaction, nil
 }
 
 func (u *TransactionUseCase) HistoryPickUp(auth string) (*[]model.ResponseTransactionPickUp, error) {

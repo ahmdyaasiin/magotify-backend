@@ -1,6 +1,7 @@
 package http
 
 import (
+	"fmt"
 	"github.com/ahmdyaasiin/magotify-backend/internal/app/delivery/http/middleware"
 	"github.com/ahmdyaasiin/magotify-backend/internal/app/model"
 	"github.com/ahmdyaasiin/magotify-backend/internal/app/usecase"
@@ -53,19 +54,27 @@ func (c *PaymentController) ValidatePaymentPickUp(ctx *fiber.Ctx) error {
 }
 
 func (c *PaymentController) ValidatePaymentShop(ctx *fiber.Ctx) error {
-
+	fmt.Println("hadhe")
 	request := new(model.RequestValidatePayment)
 
+	fmt.Println("hadhe2s")
+	fmt.Println(request)
+
 	if err := ctx.BodyParser(request); err != nil {
+		fmt.Println("error nih cok" + err.Error())
 		return fiber.ErrBadRequest
 	}
 
 	if err := c.Validator.Struct(request); err != nil {
+		fmt.Println("error nih wokwok" + err.Error())
 		return err
 	}
 
+	fmt.Println("passed")
+
 	res, err := c.PaymentUseCase.ValidateShop(request)
 	if err != nil {
+		fmt.Println("error hadeh: " + err.Error())
 		return err
 	}
 

@@ -16,6 +16,7 @@ type InterfaceTransactionRepository interface {
 	GetLast(tx *sqlx.Tx, transaction *entity.Transaction) error
 	TransactionShop(tx *sqlx.Tx, user *entity.User, entity *[]model.ResponseTransactionShop) error
 	TransactionPickUp(tx *sqlx.Tx, user *entity.User, entity *[]model.ResponseTransactionPickUp) error
+	SpecificTransaction(tx *sqlx.Tx, transactionID string, dest *model.ResponseSpecificTransactionShop) error
 }
 
 type TransactionRepository struct {
@@ -61,7 +62,7 @@ func (r *TransactionRepository) TransactionShop(tx *sqlx.Tx, user *entity.User, 
 	q := `
 SELECT
     t.id, t.invoice_number,
-    a.name,
+    a.name as address_name,
     (t.total_amount+t.shipping_costs) as total_price,
     t.created_at,
     count(ti.id)-1 as total_products,
@@ -93,8 +94,52 @@ func (r *TransactionRepository) Update(tx *sqlx.Tx, transaction *entity.Transact
 	return err
 }
 
+func (r *TransactionRepository) SpecificTransaction(tx *sqlx.Tx, transactionID string, dest *model.ResponseSpecificTransactionShop) error {
+	q := `
+SELECT
+    t.id as transaction_id, t.invoice_number, t.total_amount, t.shipping_costs,
+    t.status, t.service_type, t.service_name, COALESCE(t.receipt_number, '') as receipt_number, COALESCE(t.payment_type, '') as payment_type,
+    t.created_at, a.address, a.name as address_name, COALESCE(v.id, '') as voucher_id, COALESCE(v.name, '') as voucher_name,
+    COALESCE(v.amount, '') as voucher_amount, COALESCE(v.is_percent, '') as voucher_is_percent, COALESCE(v.url_logo, '') as voucher_url_logo
+FROM
+    transactions t
+JOIN
+    addresses a ON t.address_id = a.id
+LEFT JOIN
+    vouchers v ON t.voucher_id = v.id
+WHERE
+    t.id = ?
+	`
+
+	err := tx.Get(dest, q, transactionID)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (r *TransactionRepository) FindBy(tx *sqlx.Tx, column string, value string, entity *entity.Transaction) error {
-	q := fmt.Sprintf("SELECT * FROM transactions WHERE %s = :value", column)
+	q := `
+SELECT
+    t.id,
+    t.invoice_number,
+    t.total_amount,
+    t.shipping_costs,
+    t.status,
+    t.service_name,
+    t.service_type,
+    t.created_at,
+    t.updated_at,
+    t.address_id,
+    COALESCE(t.receipt_number, '') as receipt_number,
+    COALESCE(t.payment_type, '') as payment_type,
+    COALESCE(t.voucher_id, '') as voucher_id
+FROM
+    transactions t
+WHERE %s = :value
+    `
+	q = fmt.Sprintf(q, column)
 	param := map[string]any{
 		"value": value,
 	}

@@ -190,6 +190,7 @@ func (u *PaymentUseCase) ValidateShop(request *model.RequestValidatePayment) (*m
 	transaction := new(entity.Transaction)
 	err = u.TransactionRepository.FindBy(tx, "invoice_number", request.OrderID, transaction)
 	if err != nil {
+		fmt.Println("salahnya di sini nih pasti cok: " + err.Error())
 		return nil, err
 	}
 
@@ -212,6 +213,21 @@ func (u *PaymentUseCase) ValidateShop(request *model.RequestValidatePayment) (*m
 		if err != nil {
 			return nil, err
 		}
+	} else if request.TransactionStatus == "expire" {
+		// expired
+
+		transaction.Status = "cancel"
+		err = u.TransactionRepository.Update(tx, transaction)
+		if err != nil {
+			return nil, err
+		}
+
+		// if expired add the quantity of products back
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
 	}
 
 	return &model.ResponseValidatePayment{
@@ -250,6 +266,8 @@ func (u *PaymentUseCase) PickUp(auth string, warehouseID string, addressID strin
 		return nil, err
 	}
 
+	fmt.Println("1")
+
 	var addresses []entity.Address
 
 	err = u.AddressRepository.FindExcept(tx, address.ID, &addresses, user)
@@ -275,6 +293,8 @@ func (u *PaymentUseCase) PickUp(auth string, warehouseID string, addressID strin
 		}
 	}
 
+	fmt.Println("2")
+
 	// get vehicles except
 	var vehicles []entity.Vehicle
 
@@ -287,6 +307,7 @@ func (u *PaymentUseCase) PickUp(auth string, warehouseID string, addressID strin
 	var distance float64
 	err = u.AddressRepository.GetDistance(tx, &distance, address.ID, warehouse.ID)
 	if err != nil {
+		fmt.Println("jarak")
 		return nil, err
 	}
 
@@ -300,6 +321,8 @@ func (u *PaymentUseCase) PickUp(auth string, warehouseID string, addressID strin
 			return nil, err
 		}
 	}
+
+	fmt.Println("3")
 
 	// get all vouchers except
 	var vouchers []entity.Voucher
@@ -353,8 +376,13 @@ func (u *PaymentUseCase) CreatePickUp(auth string, request *model.RequestCreateP
 
 	err = u.DriverRepository.FindAvailableDriver(tx, request.WarehouseID, request.VehicleID, &driver)
 	if err != nil {
+
+		fmt.Println("driver not found")
+
 		return nil, err
 	}
+
+	fmt.Println("1")
 
 	// check voucher ID
 	var voucher entity.Voucher
@@ -384,6 +412,8 @@ func (u *PaymentUseCase) CreatePickUp(auth string, request *model.RequestCreateP
 	if err != nil {
 		return nil, err
 	}
+
+	fmt.Println("2")
 
 	totalPrice := distance
 	if strings.Contains(vehicle.Name, "Bike") {
@@ -427,6 +457,8 @@ func (u *PaymentUseCase) CreatePickUp(auth string, request *model.RequestCreateP
 		AddressID:     request.AddressID,
 		DriverID:      driver.ID,
 	}
+
+	fmt.Println("3")
 
 	if voucher.ID != "" {
 		newOrder.VoucherID = voucher.ID
@@ -523,6 +555,8 @@ func (u *PaymentUseCase) CreateShop(auth string, request *model.RequestCreatePay
 		if err != nil {
 			return nil, err
 		}
+
+		fmt.Println(voucher)
 	}
 
 	// check Expedition

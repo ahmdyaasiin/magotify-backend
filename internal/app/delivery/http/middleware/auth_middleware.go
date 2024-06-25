@@ -6,12 +6,13 @@ import (
 	"github.com/ahmdyaasiin/magotify-backend/internal/app/usecase"
 	"github.com/ahmdyaasiin/magotify-backend/internal/pkg/firebase"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 	"strings"
 )
 
 func NewUserMiddleware(u usecase.InterfaceUserUseCase) fiber.Handler {
 	return func(ctx *fiber.Ctx) error {
-		if ctx.Path() == "/v1/payment/validate" {
+		if ctx.Path() == "/v1/payment/shop/validate" {
 			return ctx.Next()
 		}
 
@@ -44,6 +45,10 @@ func NewUserMiddleware(u usecase.InterfaceUserUseCase) fiber.Handler {
 		ctx.Locals("user_id", uid)
 		return ctx.Next()
 	}
+}
+
+func NewCorsMiddleware() fiber.Handler {
+	return cors.New()
 }
 
 func GetUser(ctx *fiber.Ctx) string {

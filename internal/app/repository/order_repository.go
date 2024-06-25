@@ -3,6 +3,7 @@ package repository
 import (
 	"fmt"
 	"github.com/ahmdyaasiin/magotify-backend/internal/app/entity"
+	"github.com/ahmdyaasiin/magotify-backend/internal/app/model"
 	"github.com/ahmdyaasiin/magotify-backend/internal/pkg/query"
 	"github.com/jmoiron/sqlx"
 )
@@ -13,6 +14,7 @@ type InterfaceOrderRepository interface {
 	FindBy(tx *sqlx.Tx, column string, value string, entity *entity.Order) error
 	GetLast(tx *sqlx.Tx, order *entity.Order) error
 	Create(tx *sqlx.Tx, order *entity.Order) error
+	SpecificOrder(tx *sqlx.Tx, orderID string, dest *model.ResponseSpecificTransactionPickUp) error
 }
 
 type OrderRepository struct {
@@ -54,6 +56,41 @@ func (r *OrderRepository) Create(tx *sqlx.Tx, order *entity.Order) error {
 
 	_, err := tx.NamedExec(query.ForCreate(order), order)
 	return err
+}
+
+func (r *OrderRepository) SpecificOrder(tx *sqlx.Tx, orderID string, dest *model.ResponseSpecificTransactionPickUp) error {
+	q := `SELECT
+    o.id as transaction_id,
+    o.invoice_number,
+    o.total_amount,
+    o.weight, d.plate_number, v.name as vehicle_name,
+    v.status as vehicle_status, w.name as warehouse_name, w.address as warehouse_address,
+    v.duration as vehicle_duration, v.description as vehicle_description,
+    a.name as address_name, a.address as user_address,
+    ST_Distance_Sphere(
+        POINT(w.longitude, w.latitude),
+        POINT(a.longitude, a.latitude)
+    ) AS distance_m
+FROM
+    orders o
+JOIN
+    drivers d ON o.driver_id = d.id
+JOIN
+    warehouses w ON d.warehouse_id = w.id
+JOIN
+    vehicles v ON d.vehicle_id = v.id
+JOIN
+    addresses a ON o.address_id = a.id
+WHERE
+    o.id = ?
+    `
+
+	err := tx.Get(dest, q, orderID)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (r *OrderRepository) GetLast(tx *sqlx.Tx, order *entity.Order) error {

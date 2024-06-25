@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"errors"
 	"github.com/ahmdyaasiin/magotify-backend/internal/app/entity"
 	"github.com/ahmdyaasiin/magotify-backend/internal/app/model"
 	"github.com/ahmdyaasiin/magotify-backend/internal/app/repository"
@@ -136,6 +137,15 @@ func (u *CartUseCase) AddCart(auth string, request *model.RequestAddCart) (*mode
 	err = u.CartRepository.FindBy(tx, "product_id", request.ProductID, cart, user)
 	if err != nil && !strings.Contains(err.Error(), "no rows in result set") {
 		return nil, err
+	}
+
+	// product = 2
+	// cart = 4
+	// request = 3
+
+	// 3 > 2 && 3 > 4
+	if request.Quantity > product.Quantity && request.Quantity > cart.Quantity {
+		return nil, errors.New("quantity melebihi ketersediaan produk")
 	}
 
 	if request.Quantity == 0 {

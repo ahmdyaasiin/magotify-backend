@@ -1,6 +1,7 @@
 package http
 
 import (
+	"fmt"
 	"github.com/ahmdyaasiin/magotify-backend/internal/app/model"
 	"github.com/ahmdyaasiin/magotify-backend/internal/app/usecase"
 	"github.com/ahmdyaasiin/magotify-backend/internal/pkg/response"
@@ -31,6 +32,7 @@ func (c *UserController) Register(ctx *fiber.Ctx) error {
 	}
 
 	if err := c.Validator.Struct(request); err != nil {
+		fmt.Println(request)
 		return err
 	}
 

@@ -4,7 +4,7 @@ type Voucher struct {
 	ID          string  `json:"id" db:"id"`
 	Name        string  `json:"name" db:"name"`
 	Description string  `json:"description" db:"description"`
-	Status      bool    `json:"status" db:"status"`
+	Status      bool    `json:"status" db:"status" rules:"can_zero"`
 	Amount      int     `json:"amount" db:"amount"`
 	IsPercent   bool    `json:"is_percent" db:"is_percent"`
 	UrlLogo     string  `json:"url_logo" db:"url_logo"`

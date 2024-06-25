@@ -67,7 +67,7 @@ WHERE
     a.id = ?
 	`
 
-	err := tx.Get(dest, q, addressID, warehouseID)
+	err := tx.Get(dest, q, warehouseID, addressID)
 	if err != nil {
 		return err
 	}
